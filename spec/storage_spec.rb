@@ -1,17 +1,8 @@
 require 'spec_helper'
 describe HstoredDocument::Storage do
   before do
-    ActiveRecord::Base.connection.execute %Q{
-      drop table if exists docs;
-      create table docs (
-        id uuid primary key,
-        agg_id uuid not null,
-        parent_id uuid,
-        idx integer,
-        path varchar,
-        attrs hstore
-      );
-    }
+    ActiveRecord::Migration.execute "drop table if exists docs"
+    ActiveRecord::Migration.create_hstored_document :docs
   end
 
   let(:storage) do
@@ -24,8 +15,8 @@ describe HstoredDocument::Storage do
     {
       a: "1",
       b: {
-           c: "2"
-         }
+        c: "2"
+      }
     }
   end
 
@@ -33,10 +24,10 @@ describe HstoredDocument::Storage do
     {
       a: "1",
       c: {
-           d: {
-             x: 'y'
-           }
-         }
+        d: {
+          x: 'y'
+        }
+      }
     }
   end
 
@@ -44,10 +35,10 @@ describe HstoredDocument::Storage do
     {
       a: "1",
       c: {
-           d: {
-             x: 'z'
-           }
-         }
+        d: {
+          x: 'z'
+        }
+      }
     }
   end
 
