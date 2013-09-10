@@ -1,6 +1,6 @@
 require 'spec_helper'
 describe HstoredDocument::Storage do
-  before do
+  before(:all) do
     ActiveRecord::Migration.execute "drop table if exists docs"
     ActiveRecord::Migration.execute "drop table if exists items"
     ActiveRecord::Migration.create_hstored_document :docs
@@ -18,6 +18,10 @@ describe HstoredDocument::Storage do
       end
     ]
   end
+
+  let(:object_uuid) { SecureRandom.uuid }
+  let(:search_object_uuid) { SecureRandom.uuid }
+  let(:other_object_uuid) { SecureRandom.uuid }
 
   let(:object) do
     {
@@ -52,16 +56,24 @@ describe HstoredDocument::Storage do
 
   it 'should save and find' do
     storages.each do |s|
-      id = s.save(object)
+      id = s.save(object_uuid, object)
       s.find(id).should == object
+    end
+  end
+
+  it 'second save should update records' do
+    storages.each do |s|
+      id = s.save(object_uuid, object)
+      s.save(id, other_object)
+      s.find(id).should == other_object
     end
   end
 
   it 'should search' do
     storages.each do |s|
-      s.save(object)
-      s.save(other_object)
-      search_id = s.save(search_object)
+      s.save(object_uuid, object)
+      s.save(other_object_uuid, other_object)
+      search_id = s.save(search_object_uuid, search_object)
       s.search('c.d', x: 'y').should == [search_object]
     end
   end

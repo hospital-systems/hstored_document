@@ -16,12 +16,16 @@ module HstoredDocument
         @table_name = tname
       end
 
-      def save(hash)
-        records = destruct_hash(hash)
+      def save(uuid, hash)
+        storage.where(agg_id: uuid).order('id desc').destroy_all
+        records = destruct_hash(hash).map do |r|
+          r[:agg_id] = uuid
+          r
+        end
+        ids = {}
         records.each do |rec|
-          storage.create rec do |object|
-            object.id = rec[:id]
-          end
+          o = storage.create(rec.merge(parent_id: ids[rec[:parent_id]]))
+          ids[rec[:id]] = o.id
         end
         records.first.try(:[], :agg_id)
       end
