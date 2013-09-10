@@ -40,13 +40,25 @@ describe HstoredDocument::Storage do
     }
   end
 
+  let(:other_object) do
+    {
+      a: "1",
+      c: {
+           d: {
+             x: 'z'
+           }
+         }
+    }
+  end
+
   it 'should save and find' do
     id = storage.save(object)
     storage.find(id).should == object
   end
 
   it 'should search' do
-    id = storage.save(object)
+    storage.save(object)
+    storage.save(other_object)
     search_id = storage.save(search_object)
     storage.search('c.d', x: 'y').should == [search_object]
   end

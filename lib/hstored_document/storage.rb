@@ -25,7 +25,11 @@ module HstoredDocument
       end
 
       def search(path, attributes = {})
-        agg_ids = @storage.where(path: path).pluck(:agg_id)
+        scope = @storage.where(path: path)
+        attributes.each do |key, value|
+          scope = scope.where("attrs -> '#{key}' = '#{value}'")
+        end
+        agg_ids = scope.pluck(:agg_id)
         @storage.where(agg_id: agg_ids).group_by(&:agg_id).map do |_, group|
           construct(group)
         end
