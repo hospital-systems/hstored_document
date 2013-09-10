@@ -7,6 +7,7 @@ module ActiveRecord::ConnectionAdapters
         t.integer :idx
         t.text :path
         t.hstore :attrs
+        yield(t) if block_given?
       end
 
       quoted_table_name = quote_table_name(table_name)
