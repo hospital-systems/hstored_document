@@ -18,16 +18,13 @@ module HstoredDocument
 
       def save(uuid, hash)
         storage.where(agg_id: uuid).order('id desc').destroy_all
-        records = destruct_hash(hash).map do |r|
-          r[:agg_id] = uuid
-          r
-        end
+        records = destruct_hash(hash)
         ids = {}
         records.each do |rec|
-          o = storage.create(rec.merge(parent_id: ids[rec[:parent_id]]))
+          o = storage.create(rec.merge(agg_id: uuid, parent_id: ids[rec[:parent_id]]))
           ids[rec[:id]] = o.id
         end
-        records.first.try(:[], :agg_id)
+        uuid
       end
 
       def find(id)

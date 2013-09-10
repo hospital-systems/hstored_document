@@ -1,20 +1,19 @@
 module HstoredDocument
   module Converter
     def destruct_hash(hash)
-      destruct_nested_hash(nil, nil, nil, nil, hash)
+      destruct_nested_hash(nil, nil, nil, hash)
     end
 
-    def destruct_nested_hash(agg_id, parent_id, idx, path, hash)
+    def destruct_nested_hash(parent_id, idx, path, hash)
       id = SecureRandom.uuid
-      agg_id ||= id
-      row = {id: id, agg_id: agg_id, parent_id: parent_id, idx: idx, path: (path || ''), attrs: {}}
+      row = {id: id, parent_id: parent_id, idx: idx, path: (path || ''), attrs: {}}
       records = [row]
       hash.each do |k, v|
         case v
         when Hash
-          records += destruct_nested_hash(agg_id, id, nil, [path, k].compact.join('.'), v)
+          records += destruct_nested_hash(id, nil, [path, k].compact.join('.'), v)
         when Array
-          records += destruct_array(agg_id, id, [path, k].compact.join('.'), v)
+          records += destruct_array(id, [path, k].compact.join('.'), v)
         else
           row[:attrs][k.to_s] = v.to_s
         end
@@ -22,10 +21,10 @@ module HstoredDocument
       records
     end
 
-    def destruct_array(agg_id, parent_id, path, array)
+    def destruct_array(parent_id, path, array)
       records = []
       array.each_with_index do |h, index|
-        records += destruct_nested_hash(agg_id, parent_id, index, path, h)
+        records += destruct_nested_hash(parent_id, index, path, h)
       end
       records
     end
@@ -54,6 +53,5 @@ module HstoredDocument
       end
       result
     end
-
   end
 end
