@@ -24,6 +24,13 @@ module HstoredDocument
         construct(@storage.where(agg_id: id))
       end
 
+      def search(path, attributes = {})
+        agg_ids = @storage.where(path: path).pluck(:agg_id)
+        @storage.where(agg_id: agg_ids).group_by(&:agg_id).map do |_, group|
+          construct(group)
+        end
+      end
+
       def construct(records)
         rows = records.map do |item|
           item.attributes.symbolize_keys
