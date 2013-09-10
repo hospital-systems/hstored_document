@@ -3,17 +3,23 @@ module HstoredDocument
     class << self
       include HstoredDocument::Converter
 
-      def table_name=(tname)
-        @storage = Class.new(ActiveRecord::Base) do
-          self.table_name = tname
+      def storage
+        @table_name ||= name.tableize
+        table_name = @table_name
+        @storage ||= Class.new(ActiveRecord::Base) do
+          self.table_name = table_name
           serialize :attrs, ActiveRecord::Coders::Hstore
         end
+      end
+
+      def table_name=(tname)
+        @table_name = tname
       end
 
       def save(hash)
         records = destruct_hash(hash)
         records.each do |rec|
-          @storage.create rec do |object|
+          storage.create rec do |object|
             object.id = rec[:id]
           end
         end
@@ -21,16 +27,16 @@ module HstoredDocument
       end
 
       def find(id)
-        construct(@storage.where(agg_id: id))
+        construct(storage.where(agg_id: id))
       end
 
       def search(path, attributes = {})
-        scope = @storage.where(path: path)
+        scope = storage.where(path: path)
         attributes.each do |key, value|
           scope = scope.where("attrs -> '#{key}' = '#{value}'")
         end
         agg_ids = scope.pluck(:agg_id)
-        @storage.where(agg_id: agg_ids).group_by(&:agg_id).map do |_, group|
+        storage.where(agg_id: agg_ids).group_by(&:agg_id).map do |_, group|
           construct(group)
         end
       end

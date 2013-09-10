@@ -2,13 +2,21 @@ require 'spec_helper'
 describe HstoredDocument::Storage do
   before do
     ActiveRecord::Migration.execute "drop table if exists docs"
+    ActiveRecord::Migration.execute "drop table if exists items"
     ActiveRecord::Migration.create_hstored_document :docs
+    ActiveRecord::Migration.create_hstored_document :items
   end
 
-  let(:storage) do
-    Class.new(HstoredDocument::Storage) do
-      self.table_name = 'docs'
-    end
+  class Doc < HstoredDocument::Storage
+  end
+
+  let(:storages) do
+    [
+      Doc,
+      Class.new(HstoredDocument::Storage) do
+        self.table_name = 'items'
+      end
+    ]
   end
 
   let(:object) do
@@ -43,14 +51,18 @@ describe HstoredDocument::Storage do
   end
 
   it 'should save and find' do
-    id = storage.save(object)
-    storage.find(id).should == object
+    storages.each do |s|
+      id = s.save(object)
+      s.find(id).should == object
+    end
   end
 
   it 'should search' do
-    storage.save(object)
-    storage.save(other_object)
-    search_id = storage.save(search_object)
-    storage.search('c.d', x: 'y').should == [search_object]
+    storages.each do |s|
+      s.save(object)
+      s.save(other_object)
+      search_id = s.save(search_object)
+      s.search('c.d', x: 'y').should == [search_object]
+    end
   end
 end

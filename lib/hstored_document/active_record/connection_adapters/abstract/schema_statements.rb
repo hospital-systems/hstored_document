@@ -9,6 +9,11 @@ module ActiveRecord::ConnectionAdapters
         t.text :path
         t.hstore :attrs
       end
+
+      quoted_table_name = quote_table_name(table_name)
+      execute "create index on #{quoted_table_name} using gin(attrs)"
+      execute "create index on #{quoted_table_name} (path)"
+      execute "create index on #{quoted_table_name} (agg_id)"
     end
   end
 end
