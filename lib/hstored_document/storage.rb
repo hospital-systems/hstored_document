@@ -52,13 +52,15 @@ module HstoredDocument
           end
         end
         agg_ids = scope.pluck(:agg_id)
-        storage.where(agg_id: agg_ids).group_by(&:agg_id).map do |_, group|
-          construct(group)
-        end
+        construct_records(storage.where(agg_id: agg_ids))
       end
 
       def all
-        storage.all.group_by(&:agg_id).map do |_, group|
+        construct_records(storage.all)
+      end
+
+      def construct_records(records)
+        records.group_by(&:agg_id).map do |_, group|
           construct(group)
         end
       end
