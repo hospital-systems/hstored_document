@@ -30,11 +30,26 @@ module HstoredDocument
       def find(id)
         construct(storage.where(agg_id: id))
       end
-
+=begin
       def search(path, attributes = {})
         scope = storage.where(path: path)
         attributes.each do |key, value|
           scope = scope.where("attrs -> '#{key}' = '#{value}'")
+        end
+        agg_ids = scope.pluck(:agg_id)
+        storage.where(agg_id: agg_ids).group_by(&:agg_id).map do |_, group|
+          construct(group)
+        end
+      end
+=end
+      def search(pattern)
+        records = destruct_hash(pattern)
+        scope = storage.scoped
+        records.each do |record|
+          score = scope.where(path: record[:path])
+          record[:attrs].each do |key, value|
+            scope = scope.where("attrs -> '#{key}' = '#{value}'")
+          end
         end
         agg_ids = scope.pluck(:agg_id)
         storage.where(agg_id: agg_ids).group_by(&:agg_id).map do |_, group|
