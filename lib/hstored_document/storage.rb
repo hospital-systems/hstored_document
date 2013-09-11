@@ -36,13 +36,20 @@ module HstoredDocument
       def search(pattern)
         records = destruct_hash(pattern)
         scope = base_scope
-        records.each do |record|
-          score = scope.where(path: record[:path])
+        sql = []
+
+        records.each_with_index do |record, index|
+          tname = "_t#{index}"
+          scope = scope.joins("JOIN #{storage.quoted_table_name} #{tname} USING (agg_id)")
+
+          sql << "#{tname}.path = '#{record[:path]}'"
+
           record[:attrs].each do |key, value|
-            scope = scope.where("attrs -> '#{key}' = '#{value}'")
+            sql << "#{tname}.attrs -> '#{key}' = '#{value}'"
           end
+
         end
-        agg_ids = scope.pluck(:agg_id)
+        agg_ids = scope.where(sql.join(" AND ")).pluck(:agg_id)
         construct_records(base_scope.where(agg_id: agg_ids))
       end
 
@@ -51,7 +58,7 @@ module HstoredDocument
       end
 
       def base_scope
-        storage.order('id')
+        storage.order("#{storage.quoted_table_name}.id")
       end
 
       def transaction(&block)

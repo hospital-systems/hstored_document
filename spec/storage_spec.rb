@@ -20,12 +20,22 @@ describe HstoredDocument::Storage do
   end
 
   let(:object_uuid) { SecureRandom.uuid }
+  let(:object_uuid2) { SecureRandom.uuid }
   let(:search_object_uuid) { SecureRandom.uuid }
   let(:other_object_uuid) { SecureRandom.uuid }
 
   let(:object) do
     {
       a: "1",
+      b: {
+        c: "2"
+      }
+    }
+  end
+
+  let(:object2) do
+    {
+      a: "2",
       b: {
         c: "2"
       }
@@ -105,6 +115,14 @@ describe HstoredDocument::Storage do
     storages.each do |s|
       s.save(object_uuid, object)
       s.search(b: { c: '2'}).should =~ [object]
+    end
+  end
+
+  it 'should search using multiple query params' do
+    storages.each do |s|
+      s.save(object_uuid, object)
+      s.save(object_uuid2, object2)
+      s.search(a: '1', b: { c: '2'}).should =~ [object]
     end
   end
 
