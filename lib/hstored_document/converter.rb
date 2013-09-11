@@ -15,7 +15,7 @@ module HstoredDocument
         when Array
           records += destruct_array(id, [path, k].compact.join('.'), v)
         else
-          row[:attrs][k.to_s] = v.to_s
+          row[:attrs][k.to_s] = v.to_s unless v.nil?
         end
       end
       records

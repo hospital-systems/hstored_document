@@ -54,6 +54,21 @@ describe HstoredDocument::Storage do
     }
   end
 
+  let(:object_with_nil_attribute) do
+    {
+      a: '1',
+      b: nil
+    }
+  end
+
+  it "should don't save nil attributes" do
+    storages.each do |s|
+      uuid = SecureRandom.uuid
+      id = s.save(uuid, object_with_nil_attribute)
+      x = s.find(id).should == { a: '1' }
+    end
+  end
+
   it 'should save and find' do
     storages.each do |s|
       id = s.save(object_uuid, object)
