@@ -20,31 +20,22 @@ module HstoredDocument
         storage.where(agg_id: uuid).order('id desc').destroy_all
         records = destruct_hash(hash)
         ids = {}
-        records.each do |rec|
-          o = storage.create(rec.merge(agg_id: uuid, parent_id: ids[rec[:parent_id]]))
-          ids[rec[:id]] = o.id
+        transaction do
+          records.each do |rec|
+            o = storage.create(rec.merge(agg_id: uuid, parent_id: ids[rec[:parent_id]]))
+            ids[rec[:id]] = o.id
+          end
         end
         uuid
       end
 
       def find(id)
-        construct(storage.where(agg_id: id))
+        construct(base_scope.where(agg_id: id))
       end
-=begin
-      def search(path, attributes = {})
-        scope = storage.where(path: path)
-        attributes.each do |key, value|
-          scope = scope.where("attrs -> '#{key}' = '#{value}'")
-        end
-        agg_ids = scope.pluck(:agg_id)
-        storage.where(agg_id: agg_ids).group_by(&:agg_id).map do |_, group|
-          construct(group)
-        end
-      end
-=end
+
       def search(pattern)
         records = destruct_hash(pattern)
-        scope = storage.scoped
+        scope = base_scope
         records.each do |record|
           score = scope.where(path: record[:path])
           record[:attrs].each do |key, value|
@@ -52,11 +43,19 @@ module HstoredDocument
           end
         end
         agg_ids = scope.pluck(:agg_id)
-        construct_records(storage.where(agg_id: agg_ids))
+        construct_records(base_scope.where(agg_id: agg_ids))
       end
 
       def all
-        construct_records(storage.all)
+        construct_records(base_scope.all)
+      end
+
+      def base_scope
+        storage.order('id')
+      end
+
+      def transaction(&block)
+        storage.transaction(&block)
       end
 
       def construct_records(records)

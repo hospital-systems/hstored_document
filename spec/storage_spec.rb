@@ -115,4 +115,19 @@ describe HstoredDocument::Storage do
       s.all.should =~ [search_object, object]
     end
   end
+
+  it 'should be atomically' do
+    storages.each do |s|
+      begin
+        s.transaction do
+          s.save(object_uuid, object)
+          raise 'A-a-a'
+        end
+      rescue
+        nil
+      ensure
+        s.all.size.should == 0
+      end
+    end
+  end
 end
