@@ -3,8 +3,8 @@ describe HstoredDocument::Storage do
   before(:all) do
     ActiveRecord::Migration.execute "drop table if exists docs"
     ActiveRecord::Migration.execute "drop table if exists items"
-    ActiveRecord::Migration.create_hstored_document :docs
-    ActiveRecord::Migration.create_hstored_document :items
+    ActiveRecord::Migration.create_hstored_document_storage :docs
+    ActiveRecord::Migration.create_hstored_document_storage :items
   end
 
   class Doc < HstoredDocument::Storage

@@ -1,6 +1,6 @@
 module ActiveRecord::ConnectionAdapters
   module SchemaStatements
-    def create_hstored_document(table_name, options = {})
+    def create_hstored_document_storage(table_name, options = {})
       create_table(table_name) do |t|
         t.column :agg_id, 'uuid', null: false
         t.integer :parent_id
