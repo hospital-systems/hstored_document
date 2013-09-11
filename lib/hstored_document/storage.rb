@@ -57,6 +57,12 @@ module HstoredDocument
         end
       end
 
+      def all
+        storage.all.group_by(&:agg_id).map do |_, group|
+          construct(group)
+        end
+      end
+
       def construct(records)
         rows = records.map do |item|
           item.attributes.symbolize_keys

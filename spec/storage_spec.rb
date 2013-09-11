@@ -107,4 +107,12 @@ describe HstoredDocument::Storage do
       s.search(b: { c: '2'}).should =~ [object]
     end
   end
+
+  it '.all should return all objects' do
+    storages.each do |s|
+      s.save(object_uuid, object)
+      s.save(search_object_uuid, search_object)
+      s.all.should =~ [search_object, object]
+    end
+  end
 end
