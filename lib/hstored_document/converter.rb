@@ -17,7 +17,9 @@ module HstoredDocument
           when Hash
             records += destruct_array(id, [path, k].compact.join('.'), v)
           else
-            records << {id: id, parent_id: parent_id, idx: idx, path: (path || ''), attrs: { k => v }}
+            unless v.empty?
+              records << {id: id, parent_id: parent_id, idx: idx, path: (path || ''), attrs: { k => v }}
+            end
           end
         else
           row[:attrs][k.to_s] = v.to_s unless v.nil?
@@ -42,6 +44,7 @@ module HstoredDocument
     def construct_hash(rows)
       result = nil
       refs = {}
+
       rows.each do |row|
         id = row[:id]
         path = row[:path]
@@ -49,10 +52,12 @@ module HstoredDocument
         attrs = row[:attrs].symbolize_keys
         parent_id = row[:parent_id]
         idx = row[:idx]
+
         if parent_id.nil?
           refs[id] = result = attrs
         else
           ref = refs[parent_id]
+
           if idx
             array = ref[key] ||= []
             refs[id] = array[idx] = attrs
@@ -61,6 +66,7 @@ module HstoredDocument
           end
         end
       end
+
       result
     end
   end

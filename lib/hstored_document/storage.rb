@@ -35,7 +35,7 @@ module HstoredDocument
 
       def search(pattern)
         records = destruct_hash(pattern)
-        scope = base_scope
+        scope = storage.scoped
         sql = []
 
         records.each_with_index do |record, index|
@@ -52,9 +52,10 @@ module HstoredDocument
               sql << "#{tname}.attrs -> '#{key}' = '#{value}'"
             end
           end
-
         end
-        agg_ids = scope.where(sql.join(" AND ")).pluck(:agg_id)
+
+        agg_ids = scope.where(sql.join(" AND ")).pluck("DISTINCT agg_id")
+
         construct_records(base_scope.where(agg_id: agg_ids))
       end
 
