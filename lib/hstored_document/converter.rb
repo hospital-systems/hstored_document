@@ -13,7 +13,12 @@ module HstoredDocument
         when Hash
           records += destruct_nested_hash(id, nil, [path, k].compact.join('.'), v)
         when Array
-          records += destruct_array(id, [path, k].compact.join('.'), v)
+          case v.first
+          when Hash
+            records += destruct_array(id, [path, k].compact.join('.'), v)
+          else
+            records << {id: id, parent_id: parent_id, idx: idx, path: (path || ''), attrs: { k => v }}
+          end
         else
           row[:attrs][k.to_s] = v.to_s unless v.nil?
         end
@@ -24,7 +29,12 @@ module HstoredDocument
     def destruct_array(parent_id, path, array)
       records = []
       array.each_with_index do |h, index|
-        records += destruct_nested_hash(parent_id, index, path, h)
+        case h
+        when Hash
+          records += destruct_nested_hash(parent_id, index, path, h)
+        else
+          records << {id: id, parent_id: parent_id, idx: idx, path: (path || ''), attrs: {}}
+        end
       end
       records
     end

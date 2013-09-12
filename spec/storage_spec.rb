@@ -71,6 +71,21 @@ describe HstoredDocument::Storage do
     }
   end
 
+  let(:object_array) do
+    [{
+      b: '1',
+      a: '1'
+    },
+    {
+      b: '2',
+      a: '1'
+    },
+    {
+      b: '3',
+      a: '1'
+    }]
+  end
+
   it "should don't save nil attributes" do
     storages.each do |s|
       uuid = SecureRandom.uuid
@@ -104,6 +119,15 @@ describe HstoredDocument::Storage do
     end
   end
 =end
+
+  it 'should search within array' do
+    storage = storages[0]
+    storage.save(SecureRandom.uuid, object_array[0])
+    storage.save(SecureRandom.uuid, object_array[1])
+    storage.save(SecureRandom.uuid, object_array[2])
+    storage.search(a: '1', b: ['1', '2']).should =~ object_array[0..1]
+  end
+
   it 'should search by simple example' do
     storages.each do |s|
       s.save(search_object_uuid, search_object)

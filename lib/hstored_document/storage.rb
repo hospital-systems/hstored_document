@@ -45,7 +45,12 @@ module HstoredDocument
           sql << "#{tname}.path = '#{record[:path]}'"
 
           record[:attrs].each do |key, value|
-            sql << "#{tname}.attrs -> '#{key}' = '#{value}'"
+            if Array === value
+              v = value.map { |x| "'#{x}'" }.join(",")
+              sql << "#{tname}.attrs -> '#{key}' IN (#{v})"
+            else
+              sql << "#{tname}.attrs -> '#{key}' = '#{value}'"
+            end
           end
 
         end
