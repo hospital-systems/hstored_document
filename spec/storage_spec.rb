@@ -179,4 +179,13 @@ describe HstoredDocument::Storage do
       end
     end
   end
+
+  it '.delete_all should delete all matched objects' do
+    s = storages[0]
+    3.times do |i|
+      s.save(SecureRandom.uuid, object_array[i])
+    end
+    s.delete_all({ a: '1', b: ['2', '3']})
+    s.all.should =~ object_array[0..0]
+  end
 end

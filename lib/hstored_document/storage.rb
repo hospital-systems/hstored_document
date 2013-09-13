@@ -20,6 +20,10 @@ module HstoredDocument
         storage.where(agg_id: uuid).order('id desc').destroy_all
       end
 
+      def delete_all(pattern)
+        delete search_for_ids(pattern)
+      end
+
       def save(uuid, hash)
         delete(uuid)
         records = destruct_hash(hash)
@@ -38,6 +42,10 @@ module HstoredDocument
       end
 
       def search(pattern)
+        construct_records(base_scope.where(agg_id: search_for_ids(pattern)))
+      end
+
+      def search_for_ids(pattern)
         records = destruct_hash(pattern)
         scope = storage.scoped
         sql = []
@@ -57,10 +65,7 @@ module HstoredDocument
             end
           end
         end
-
         agg_ids = scope.where(sql.join(" AND ")).pluck("DISTINCT agg_id")
-
-        construct_records(base_scope.where(agg_id: agg_ids))
       end
 
       def all
