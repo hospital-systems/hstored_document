@@ -120,6 +120,13 @@ describe HstoredDocument::Storage do
   end
 =end
 
+  it 'should delete object' do
+    s = storages[0]
+    uuid = s.save(SecureRandom.uuid, object)
+    s.delete(uuid)
+    s.find(uuid).should be_nil
+  end
+
   it 'should search within array' do
     storage = storages[0]
     storage.save(SecureRandom.uuid, object_array[0])

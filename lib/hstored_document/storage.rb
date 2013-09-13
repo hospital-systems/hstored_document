@@ -16,8 +16,12 @@ module HstoredDocument
         @table_name = tname
       end
 
-      def save(uuid, hash)
+      def delete(uuid)
         storage.where(agg_id: uuid).order('id desc').destroy_all
+      end
+
+      def save(uuid, hash)
+        delete(uuid)
         records = destruct_hash(hash)
         ids = {}
         transaction do
