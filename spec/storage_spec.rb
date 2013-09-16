@@ -10,13 +10,14 @@ describe HstoredDocument::Storage do
   class Doc < HstoredDocument::Storage
   end
 
-  let(:storages) do
-    [
-      Doc,
-      Class.new(HstoredDocument::Storage) do
-        self.table_name = 'items'
-      end
-    ]
+  let(:storage) do
+      Doc
+  end
+
+  let(:anonymous_storage) do
+    Class.new(HstoredDocument::Storage) do
+      self.table_name = 'items'
+    end
   end
 
   let(:object_uuid) { SecureRandom.uuid }
@@ -86,49 +87,35 @@ describe HstoredDocument::Storage do
     }]
   end
 
+  it "should save and find with anonymous storage" do
+    id = anonymous_storage.save(object_uuid, object)
+    anonymous_storage.find(id).should == object
+  end
+
   it "should don't save nil attributes" do
-    storages.each do |s|
-      uuid = SecureRandom.uuid
-      id = s.save(uuid, object_with_nil_attribute)
-      x = s.find(id).should == { a: '1' }
-    end
+    uuid = SecureRandom.uuid
+    id = storage.save(uuid, object_with_nil_attribute)
+    x = storage.find(id).should == { a: '1' }
   end
 
   it 'should save and find' do
-    storages.each do |s|
-      id = s.save(object_uuid, object)
-      s.find(id).should == object
-    end
+    id = storage.save(object_uuid, object)
+    storage.find(id).should == object
   end
 
   it 'second save should update records' do
-    storages.each do |s|
-      id = s.save(object_uuid, object)
-      s.save(id, other_object)
-      s.find(id).should == other_object
-    end
+    id = storage.save(object_uuid, object)
+    storage.save(id, other_object)
+    storage.find(id).should == other_object
   end
-
-=begin
-  it 'should search' do
-    storages.each do |s|
-      s.save(object_uuid, object)
-      s.save(other_object_uuid, other_object)
-      search_id = s.save(search_object_uuid, search_object)
-      s.search('c.d', x: 'y').should == [search_object]
-    end
-  end
-=end
 
   it 'should delete object' do
-    s = storages[0]
-    uuid = s.save(SecureRandom.uuid, object)
-    s.delete(uuid)
-    s.find(uuid).should be_nil
+    uuid = storage.save(SecureRandom.uuid, object)
+    storage.delete(uuid)
+    storage.find(uuid).should be_nil
   end
 
   it 'should search within array' do
-    storage = storages[0]
     storage.save(SecureRandom.uuid, object_array[0])
     storage.save(SecureRandom.uuid, object_array[1])
     storage.save(SecureRandom.uuid, object_array[2])
@@ -136,56 +123,45 @@ describe HstoredDocument::Storage do
   end
 
   it 'should search by simple example' do
-    storages.each do |s|
-      s.save(search_object_uuid, search_object)
-      s.search(a: '1').should =~ [search_object]
-    end
+    storage.save(search_object_uuid, search_object)
+    storage.search(a: '1').should =~ [search_object]
   end
 
   it 'should search by example' do
-    storages.each do |s|
-      s.save(object_uuid, object)
-      s.search(b: { c: '2'}).should =~ [object]
-    end
+    storage.save(object_uuid, object)
+    storage.search(b: { c: '2'}).should =~ [object]
   end
 
   it 'should search using multiple query params' do
-    storages.each do |s|
-      s.save(object_uuid, object)
-      s.save(object_uuid2, object2)
-      s.search(a: '1', b: { c: '2'}).should =~ [object]
-    end
+    storage.save(object_uuid, object)
+    storage.save(object_uuid2, object2)
+    storage.search(a: '1', b: { c: '2'}).should =~ [object]
   end
 
   it '.all should return all objects' do
-    storages.each do |s|
-      s.save(object_uuid, object)
-      s.save(search_object_uuid, search_object)
-      s.all.should =~ [search_object, object]
-    end
+    storage.save(object_uuid, object)
+    storage.save(search_object_uuid, search_object)
+    storage.all.should =~ [search_object, object]
   end
 
   it 'should be atomically' do
-    storages.each do |s|
-      begin
-        s.transaction do
-          s.save(object_uuid, object)
-          raise 'A-a-a'
-        end
-      rescue
-        nil
-      ensure
-        s.all.size.should == 0
+    begin
+      storage.transaction do
+        storage.save(object_uuid, object)
+        raise 'A-a-a'
       end
+    rescue
+      nil
+    ensure
+      storage.all.size.should == 0
     end
   end
 
   it '.delete_all should delete all matched objects' do
-    s = storages[0]
     3.times do |i|
-      s.save(SecureRandom.uuid, object_array[i])
+      storage.save(SecureRandom.uuid, object_array[i])
     end
-    s.delete_all({ a: '1', b: ['2', '3']})
-    s.all.should =~ object_array[0..0]
+    storage.delete_all({ a: '1', b: ['2', '3']})
+    storage.all.should =~ object_array[0..0]
   end
 end
