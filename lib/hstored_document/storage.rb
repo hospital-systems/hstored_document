@@ -60,12 +60,14 @@ module HstoredDocument
           sql << "#{tname}.path = ?"
 
           record[:attrs].each do |key, value|
-            values << value
-            if Array === value
-              sql << "#{tname}.attrs -> '#{key}' IN (?)"
-            else
-              sql << "#{tname}.attrs -> '#{key}' = ?"
-            end
+            values << value unless value.nil?
+            sql << if Array === value
+                     "#{tname}.attrs -> '#{key}' IN (?)"
+                   elsif value.nil?
+                     "#{tname}.attrs @> '#{key}=>NULL'::hstore"
+                   else
+                     "#{tname}.attrs -> '#{key}' = ?"
+                   end
           end
         end
         agg_ids = scope.where(sql.join(" AND "), *values).pluck("DISTINCT agg_id")

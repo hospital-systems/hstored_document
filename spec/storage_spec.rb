@@ -144,6 +144,12 @@ describe HstoredDocument::Storage do
     storage.all.should =~ [search_object, object]
   end
 
+  it 'should search by nil value' do
+    storage.save(SecureRandom.uuid, object_with_nil_attribute)
+    storage.search(b: nil).should =~ [object_with_nil_attribute]
+    storage.search(b: nil, a: '1').should =~ [object_with_nil_attribute]
+  end
+
   it 'should be atomically' do
     begin
       storage.transaction do
