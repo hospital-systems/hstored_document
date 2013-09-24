@@ -92,10 +92,10 @@ describe HstoredDocument::Storage do
     anonymous_storage.find(id).should == object
   end
 
-  it "should don't save nil attributes" do
+  it "should save nil attributes" do
     uuid = SecureRandom.uuid
     id = storage.save(uuid, object_with_nil_attribute)
-    x = storage.find(id).should == { a: '1' }
+    x = storage.find(id).should == { a: '1', b: nil }
   end
 
   it 'should save and find' do

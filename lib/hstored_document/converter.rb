@@ -22,7 +22,7 @@ module HstoredDocument
             end
           end
         else
-          row[:attrs][k.to_s] = v.to_s unless v.nil?
+          row[:attrs][k.to_s] = v#.to_s unless v.nil?
         end
       end
       records
