@@ -50,22 +50,25 @@ module HstoredDocument
         scope = storage.scoped
         sql = []
 
+        values = []
+
         records.each_with_index do |record, index|
           tname = "_t#{index}"
           scope = scope.joins("JOIN #{storage.quoted_table_name} #{tname} USING (agg_id)")
 
-          sql << "#{tname}.path = '#{record[:path]}'"
+          values << record[:path]
+          sql << "#{tname}.path = ?"
 
           record[:attrs].each do |key, value|
+            values << value
             if Array === value
-              v = value.map { |x| "'#{x}'" }.join(",")
-              sql << "#{tname}.attrs -> '#{key}' IN (#{v})"
+              sql << "#{tname}.attrs -> '#{key}' IN (?)"
             else
-              sql << "#{tname}.attrs -> '#{key}' = '#{value}'"
+              sql << "#{tname}.attrs -> '#{key}' = ?"
             end
           end
         end
-        agg_ids = scope.where(sql.join(" AND ")).pluck("DISTINCT agg_id")
+        agg_ids = scope.where(sql.join(" AND "), *values).pluck("DISTINCT agg_id")
       end
 
       def all

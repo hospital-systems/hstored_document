@@ -164,4 +164,19 @@ describe HstoredDocument::Storage do
     storage.delete_all({ a: '1', b: ['2', '3']})
     storage.all.should =~ object_array[0..0]
   end
+
+  let(:danger_object) do
+    {
+      a: "'1",
+      b: "2;drop",
+      c: "3--"
+    }
+  end
+
+  it 'should escape search values' do
+    storage.save(SecureRandom.uuid, danger_object)
+    storage.search(a: "'1").should =~ [danger_object]
+    storage.search(b: "2;drop").should =~ [danger_object]
+    storage.search(c: "3--").should =~ [danger_object]
+  end
 end
