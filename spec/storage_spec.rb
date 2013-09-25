@@ -34,6 +34,20 @@ describe HstoredDocument::Storage do
     }
   end
 
+  let(:object_with_time) do
+    {
+      value: '123',
+      created_at: 1.day.ago.to_s,
+    }
+  end
+
+  let(:object_with_time_second) do
+    {
+      value: '123',
+      created_at: 1.week.ago.to_s,
+    }
+  end
+
   let(:object2) do
     {
       a: "2",
@@ -184,5 +198,12 @@ describe HstoredDocument::Storage do
     storage.search(a: "'1").should =~ [danger_object]
     storage.search(b: "2;drop").should =~ [danger_object]
     storage.search(c: "3--").should =~ [danger_object]
+  end
+
+  it 'should search by sql' do
+    storage.save(SecureRandom.uuid, object_with_time)
+    storage.save(SecureRandom.uuid, object_with_time_second)
+    storage.search(_sql: ["(docs.attrs->'created_at')::timestamp > ?", 2.days.ago]).should =~ [object_with_time]
+    storage.search(_sql: ["(docs.attrs->'created_at')::timestamp > :now", { now: 2.days.ago }]).should =~ [object_with_time]
   end
 end

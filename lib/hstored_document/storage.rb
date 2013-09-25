@@ -46,6 +46,7 @@ module HstoredDocument
       end
 
       def search_for_ids(pattern)
+        _sql = pattern.delete(:_sql)
         records = destruct_hash(pattern)
         scope = storage.scoped
         sql = []
@@ -70,7 +71,11 @@ module HstoredDocument
                    end
           end
         end
-        agg_ids = scope.where(sql.join(" AND "), *values).pluck("DISTINCT agg_id")
+        scope = scope.where(sql.join(" AND "), *values)
+        if _sql
+          scope = scope.where(_sql)
+        end
+        agg_ids = scope.pluck("DISTINCT agg_id")
       end
 
       def all
