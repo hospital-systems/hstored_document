@@ -11,7 +11,7 @@ describe HstoredDocument::Storage do
   end
 
   let(:storage) do
-      Doc
+    Doc
   end
 
   let(:anonymous_storage) do
@@ -19,11 +19,6 @@ describe HstoredDocument::Storage do
       self.table_name = 'items'
     end
   end
-
-  let(:object_uuid) { SecureRandom.uuid }
-  let(:object_uuid2) { SecureRandom.uuid }
-  let(:search_object_uuid) { SecureRandom.uuid }
-  let(:other_object_uuid) { SecureRandom.uuid }
 
   let(:object) do
     {
@@ -101,65 +96,68 @@ describe HstoredDocument::Storage do
     }]
   end
 
+  def save(object)
+    storage.save(SecureRandom.uuid, object)
+  end
+
   it "should save and find with anonymous storage" do
-    id = anonymous_storage.save(object_uuid, object)
+    id = anonymous_storage.save(SecureRandom.uuid, object)
     anonymous_storage.find(id).should == object
   end
 
-  it "should save nil attributes" do
-    uuid = SecureRandom.uuid
-    id = storage.save(uuid, object_with_nil_attribute)
+  it "should don't save nil attributes" do
+    id = save object_with_nil_attribute
     x = storage.find(id).should == { a: '1', b: nil }
   end
 
   it 'should save and find' do
-    id = storage.save(object_uuid, object)
+    id = save(object)
     storage.find(id).should == object
   end
 
   it 'second save should update records' do
-    id = storage.save(object_uuid, object)
+    id = save(object)
     storage.save(id, other_object)
     storage.find(id).should == other_object
   end
 
   it 'should delete object' do
-    uuid = storage.save(SecureRandom.uuid, object)
+    uuid = save(object)
     storage.delete(uuid)
     storage.find(uuid).should be_nil
   end
 
   it 'should search within array' do
-    storage.save(SecureRandom.uuid, object_array[0])
-    storage.save(SecureRandom.uuid, object_array[1])
-    storage.save(SecureRandom.uuid, object_array[2])
+    save(object_array[0])
+    save(object_array[1])
+    save(object_array[2])
     storage.search(a: '1', b: ['1', '2']).should =~ object_array[0..1]
   end
 
   it 'should search by simple example' do
-    storage.save(search_object_uuid, search_object)
+    save(search_object)
     storage.search(a: '1').should =~ [search_object]
   end
 
   it 'should search by example' do
-    storage.save(object_uuid, object)
+    save(object)
     storage.search(b: { c: '2'}).should =~ [object]
   end
 
   it 'should search using multiple query params' do
-    storage.save(object_uuid, object)
-    storage.save(object_uuid2, object2)
+    save(object)
+    save(object2)
     storage.search(a: '1', b: { c: '2'}).should =~ [object]
   end
 
   it '.all should return all objects' do
-    storage.save(object_uuid, object)
-    storage.save(search_object_uuid, search_object)
+    save(object)
+    save(search_object)
     storage.all.should =~ [search_object, object]
   end
 
   it 'should search by nil value' do
-    storage.save(SecureRandom.uuid, object_with_nil_attribute)
+    save(object_with_nil_attribute)
     storage.search(b: nil).should =~ [object_with_nil_attribute]
     storage.search(b: nil, a: '1').should =~ [object_with_nil_attribute]
   end
@@ -167,7 +165,7 @@ describe HstoredDocument::Storage do
   it 'should be atomically' do
     begin
       storage.transaction do
-        storage.save(object_uuid, object)
+        save(object)
         raise 'A-a-a'
       end
     rescue
@@ -179,7 +177,7 @@ describe HstoredDocument::Storage do
 
   it '.delete_all should delete all matched objects' do
     3.times do |i|
-      storage.save(SecureRandom.uuid, object_array[i])
+      save(object_array[i])
     end
     storage.delete_all({ a: '1', b: ['2', '3']})
     storage.all.should =~ object_array[0..0]
@@ -194,16 +192,17 @@ describe HstoredDocument::Storage do
   end
 
   it 'should escape search values' do
-    storage.save(SecureRandom.uuid, danger_object)
+    save(danger_object)
     storage.search(a: "'1").should =~ [danger_object]
     storage.search(b: "2;drop").should =~ [danger_object]
     storage.search(c: "3--").should =~ [danger_object]
   end
 
   it 'should search by sql' do
-    storage.save(SecureRandom.uuid, object_with_time)
-    storage.save(SecureRandom.uuid, object_with_time_second)
+    save(object_with_time)
+    save(object_with_time_second)
     storage.search(_sql: ["(docs.attrs->'created_at')::timestamp > ?", 2.days.ago]).should =~ [object_with_time]
     storage.search(_sql: ["(docs.attrs->'created_at')::timestamp > :now", { now: 2.days.ago }]).should =~ [object_with_time]
   end
 end
+
